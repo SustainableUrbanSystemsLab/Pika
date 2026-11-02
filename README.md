@@ -25,6 +25,8 @@ The scripts and practical usability of **Select PV Panel**, **PV Geometry Genera
 
 PV Module Specifications does not calculate solar exposure or electricity generation. It currently packages and validates module inputs and converts the temperature coefficient from percent to a fraction. Its removal is being considered to simplify the workflow.
 
+You can find C# scripts here: `src/PlugInSolar/Components`
+
 ## Repository map
 
 ```text
