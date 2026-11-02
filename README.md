@@ -8,20 +8,22 @@ Rhino 8 / Grasshopper components for generating and evaluating building-mounted 
 - **Solar workflow (experimental):** [Solar_Workflow.gh](examples/solar/Solar_Workflow.gh). Its embedded weather is synthetic; replace it with real EPW inputs for research.
 - [Installation](docs/INSTALLATION.md) · [Current components](docs/COMPONENTS.md) · [Development](docs/DEVELOPMENT.md).
 
-The three components confirmed for advisor review are **Select PV Panel**, **PV Geometry Generator**, and **PV Candidate Layout**. The newer solar components are retained as experimental work; they are not part of the separate three-component advisor package.
+The scripts and practical usability of **Select PV Panel**, **PV Geometry Generator**, and **PV Candidate Layout** have been verified in the tested geometry workflow. The newer solar components are retained as experimental work; they are not part of the separate three-component advisor package.
 
 ## Current components
 
 | Component | Role | Status |
 |---|---|---|
-| Select PV Panel | Select a catalog product and supply dimensions/specifications | Advisor-review scope |
-| PV Geometry Generator | Generate a panel template from dimensions | Advisor-review scope |
-| PV Candidate Layout | Arrange panels on one selected planar mounting face, with geometric checks | Advisor-review scope |
-| PV Module Specifications | Organize/validate custom or catalog electrical inputs | Supporting input |
+| Select PV Panel | Select a catalog product and supply dimensions/specifications | Script verified; practical usability verified |
+| PV Geometry Generator | Generate a panel template from dimensions | Script verified; practical usability verified |
+| PV Candidate Layout | Arrange panels on one selected planar mounting face, with geometric checks | Script verified; practical usability verified |
+| PV Module Specifications | Group and validate electrical inputs; convert the temperature coefficient to fractional units | Under consideration for removal |
 | PV Solar Conditions | Normalize hourly radiation and prepare sun/sky data | Experimental |
 | PV Solar Exposure | Calculate grid-cell irradiation and panel-average irradiance | Experimental |
 | PV Exposure Map | Display the retained cell grid with a legend | Experimental |
 | PV Electricity | Calculate simplified module DC and array AC output | Experimental |
+
+PV Module Specifications does not calculate solar exposure or electricity generation. It currently packages and validates module inputs and converts the temperature coefficient from percent to a fraction. Its removal is being considered to simplify the workflow.
 
 ## Repository map
 
