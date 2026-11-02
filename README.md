@@ -1,39 +1,63 @@
 # Plug-In Solar
-A Rhino 8 / Grasshopper Python 3 starter for a university plug-in PV project.
 
-## Included
-- Seven Python component scripts and a machine-readable port/icon catalogue.
-- A separate `plug_in_solar` calculation package using pvlib.
-- Original light/dark SVG icons and 24/48 px PNG exports.
-- A synthetic clear-sky example and calculation checks.
+Rhino 8 / Grasshopper components for generating and evaluating building-mounted PV layouts.
 
-A compiled Rhino 8 library is available in `build/grasshopper/PlugInSolar.gha`. Rebuild and install its library link with `scripts/build_plugin.sh`. Open [the wired example](examples/PlugInSolar_Example.gh), or its [GHX equivalent](examples/PlugInSolar_Example.ghx). See [example notes](examples/README.md) for setup and assumptions. The original Python Script Mode adapters remain available; their setup is documented in [Rhino setup](docs/RHINO_SETUP.md) and [component ports](docs/COMPONENTS.md).
+## Start here
 
-## Layout
-- `src/plug_in_solar/` — calculation core, no Rhino dependency
-- `grasshopper/components/` — Python 3 Script Mode adapters
-- `grasshopper/components.json` — component names, categories, ports and icon paths (our own catalogue, not a Rhino project file)
-- `assets/icons/` — editable SVGs and PNG exports
-- `examples/clear_sky_demo.py` — end-to-end example
-- `tests/` — physical/convention and time-integration checks
+- **Geometry workflow:** open [Start_Here.3dm](examples/geometry/Start_Here.3dm), keeping millimeters, then [Geometry_Workflow.gh](examples/geometry/Geometry_Workflow.gh). Baseline: **6 panels, 10.005996 m²**.
+- **Solar workflow (experimental):** [Solar_Workflow.gh](examples/solar/Solar_Workflow.gh). Its embedded weather is synthetic; replace it with real EPW inputs for research.
+- [Installation](docs/INSTALLATION.md) · [Current components](docs/COMPONENTS.md) · [Development](docs/DEVELOPMENT.md).
 
-## Local development
-Use Python 3.9–3.12 for the pinned dependency set:
+The three components confirmed for advisor review are **Select PV Panel**, **PV Geometry Generator**, and **PV Candidate Layout**. The newer solar components are retained as experimental work; they are not part of the separate three-component advisor package.
 
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-python -m unittest discover -s tests
-python examples/clear_sky_demo.py
+## Current components
+
+| Component | Role | Status |
+|---|---|---|
+| Select PV Panel | Select a catalog product and supply dimensions/specifications | Advisor-review scope |
+| PV Geometry Generator | Generate a panel template from dimensions | Advisor-review scope |
+| PV Candidate Layout | Arrange panels on one selected planar mounting face, with geometric checks | Advisor-review scope |
+| PV Module Specifications | Organize/validate custom or catalog electrical inputs | Supporting input |
+| PV Solar Conditions | Normalize hourly radiation and prepare sun/sky data | Experimental |
+| PV Solar Exposure | Calculate grid-cell irradiation and panel-average irradiance | Experimental |
+| PV Exposure Map | Display the retained cell grid with a legend | Experimental |
+| PV Electricity | Calculate simplified module DC and array AC output | Experimental |
+
+## Repository map
+
+```text
+src/PlugInSolar/
+  Components/Inputs/       product selection and module specifications
+  Components/Geometry/     geometry generator and candidate layout
+  Components/Performance/  current solar conditions, exposure, map and electricity
+  Core/                    shared placement engine and Python process helper
+  Data/                    typed data, catalog and data-tree helpers
+  UI/                      product dropdown interface
+  Assets/                  required icons and editable SVG originals
+  PluginInfo.cs            library identity and icon loading
+  PlugInSolar.csproj       build project
+python/                    current Solar Conditions backend only
+scripts/                   build helpers
+examples/geometry/         current three-component main-plugin example
+examples/solar/            current experimental solar example
+docs/                      current usage and development instructions
+tests/                     current C# and Python tests; portable sky fixture
+references/                source panel datasheet
+requirements-solar.txt     optional solar-backend Python dependencies
 ```
 
-The pinned versions target Rhino 8's Python 3.9 environment. Dependency compatibility inside Rhino must still be checked when Rhino is reopened. First component execution may download dependencies.
+`build/` and `.venv/` are local, ignored outputs. They are not source files to select in GitHub Desktop. Old component versions and their examples are no longer mixed with current source; an external backup was made before cleanup. See [cleanup notes](docs/CLEANUP.md).
 
-## Modelling boundaries
-Clear Sky produces synthetic irradiance, not historical weather or a typical year. Irradiance uses an isotropic diffuse sky and a fixed albedo. PV Power uses Faiman temperature, PVWatts DC/inverter, constant ambient temperature/wind, and a user-specified lumped DC loss. POA is used as effective irradiance without spectral/AOI losses. No obstacle shading, bypass diode/mismatch model, electrical design or grid compliance model is included. AC limit is a modelling input, not a legal recommendation.
+## Requirements
 
-Energy is rectangle integration using an explicit interval duration; point samples from the demo approximate interval-average power. The result covers only the provided period. North is +Y in Rhino by default; positive north rotation is clockwise toward +X. Solar azimuth is clockwise from geographic north. Keep timezone-aware timestamps throughout.
+The geometry workflow runs directly in Rhino/Grasshopper; no external Python environment, Ladybug, Eddy3D or Radiance is needed for those three components.
 
-## Next additions
-Measured/TMY weather import with units and timestamp normalization; shading from Rhino geometry; module/inverter presets; design comparison; saved `.gh` examples; packaged toolbar.
+The experimental Solar Conditions component additionally uses a local Python environment, the packages in `requirements-solar.txt`, installed Ladybug patch definitions and Radiance `gendaymtx`. See [solar workflow](docs/SOLAR_WORKFLOW.md).
+
+The current local build was verified in Rhino 8.36 for macOS, .NET 10.0.8. Use the in-Rhino build helper to compile against the running Rhino runtime, or the .NET 10 SDK project for this configuration. Other runtime/platform combinations are not implied to have been tested.
+
+## Modeling boundaries
+
+Candidate Layout tests geometric placement, not energy performance or installation engineering. Panel analysis area is full rectangular front area. Solar Exposure retains local cell irradiation but uses panel-average hourly irradiance for Electricity. The electrical model assumes independent module maximum-power operation with a common inverter; shared-string mismatch and bypass diodes are not modeled. Additional Shading Geometry keeps its existing geometric-blocking behavior; no new tree/transmission model is included.
+
+Household savings and automatic design search are not implemented. A public repository also needs an explicit license before being presented as a reusable open-source release; a project license has not been selected here.

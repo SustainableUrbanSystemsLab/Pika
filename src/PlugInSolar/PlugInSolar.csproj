@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>PlugInSolar</AssemblyName>
+    <Version>0.5.0</Version>
+    <TargetExt>.gha</TargetExt>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RhinoDir Condition="'$(RhinoDir)'==''">/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Versions/A/Resources</RhinoDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="RhinoCommon"><HintPath>$(RhinoDir)/RhinoCommon.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Grasshopper"><HintPath>$(RhinoDir)/ManagedPlugIns/GrasshopperPlugin.rhp/Grasshopper.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GH_IO"><HintPath>$(RhinoDir)/ManagedPlugIns/GrasshopperPlugin.rhp/GH_IO.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Windows.Forms"><HintPath>$(RhinoDir)/System.Windows.Forms.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Drawing.Common"><HintPath>$(RhinoDir)/System.Drawing.Common.dll</HintPath><Private>false</Private></Reference>
+    <EmbeddedResource Include="Assets/*-24.png" />
+    <None Include="../../python/bridge.py" Link="bridge.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../python/solar_conditions.py" Link="solar_conditions.py" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

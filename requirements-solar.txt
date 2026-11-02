@@ -1,0 +1,4 @@
+pvlib==0.13.0
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1

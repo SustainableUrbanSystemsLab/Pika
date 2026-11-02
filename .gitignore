@@ -45,3 +45,8 @@ coverage.xml
 # Compiled Grasshopper wrapper
 **/bin/
 **/obj/
+
+# Local links, test/build outputs and private snapshots
+*.ghlink
+.local/
+*.tmp
