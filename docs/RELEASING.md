@@ -19,7 +19,7 @@ Package: Yak, Rhino 8 for Mac only (the project targets `net8.0`, compiled again
 1. The package name is `Pika` (`name:` in `yak/manifest.yml`), and it is permanent once pushed. `yak search` is a text search of Yak only, so also search food4rhino.com for it before the first push.
 2. Choose a license and add `LICENSE` (README says none is selected yet).
 3. Confirm `authors:` and `url:` in `yak/manifest.yml`.
-4. Minimum Rhino is 8.27: the `RhinoCommon`/`Grasshopper` package versions in the csproj set the Yak tag (`rh8_27-mac`). Load the built `.gha` in Rhino 8.27 for Mac before the first push; the `net8.0` build has only been compiled, not run in Rhino.
+4. Minimum Rhino is 8.27: the `RhinoCommon`/`Grasshopper` package versions in the csproj set the Yak tag (`rh8_27-mac`). `0.5.0-beta.1` was load-tested in Rhino 8.32 on .NET 8.0.14 (all 8 components construct); it has not been run in Rhino 8.27 itself.
 5. `yak login` (opens a browser; needs a McNeel account).
 
 ## Beta (from `pre-release`)

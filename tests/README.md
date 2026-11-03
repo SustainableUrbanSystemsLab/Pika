@@ -1,6 +1,6 @@
 # Current verification
 
-Run `scripts/run_checks_in_rhino.py` in Rhino's Python 3 ScriptEditor after opening Grasshopper.
+Run `scripts/run_checks_in_rhino.py` in Rhino's Python 3 ScriptEditor after opening Grasshopper, with a document window open. The wired-solve checks need `RhinoDoc.ActiveDoc`; without it they fail with "component default solve has no errors".
 
 | Check file | Coverage |
 |---|---|

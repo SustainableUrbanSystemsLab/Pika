@@ -59,7 +59,7 @@ The geometry workflow runs directly in Rhino/Grasshopper; no external Python env
 
 The experimental Solar Conditions component additionally uses a local Python environment, the packages in `requirements-solar.txt`, installed Ladybug patch definitions and Radiance `gendaymtx`. See [solar workflow](docs/SOLAR_WORKFLOW.md).
 
-The project targets .NET 8 and RhinoCommon 8.27 (the minimum supported Rhino 8 for Mac). Earlier local builds were verified in Rhino 8.36 for macOS on .NET 10.0.8; the .NET 8 build has not yet been verified in Rhino. Use the in-Rhino build helper to compile against the running Rhino runtime, or the SDK project. Other runtime/platform combinations are not implied to have been tested.
+The project targets .NET 8 and RhinoCommon 8.27 (the minimum supported Rhino 8 for Mac). Earlier local builds were verified in Rhino 8.36 for macOS on .NET 10.0.8; the .NET 8 build loads all eight components in Rhino 8.32, but its example workflows and full checks have not yet been run. Use the in-Rhino build helper to compile against the running Rhino runtime, or the SDK project. Other runtime/platform combinations are not implied to have been tested.
 
 ## Modeling boundaries
 
