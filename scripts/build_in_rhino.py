@@ -22,7 +22,7 @@ def build(package_root,output_name='PlugInSolar',with_tests=False):
     resources_root=Path('/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Resources')
     for name in ['Grasshopper.dll','GH_IO.dll']:paths.add(str(resources_root/'ManagedPlugIns/GrasshopperPlugin.rhp'/name))
     refs=[MetadataReference.CreateFromFile(p) for p in paths if Path(p).is_file() and not p.endswith('.gha')]
-    trees=[CSharpSyntaxTree.ParseText(File.ReadAllText(str(p)),path=str(p)) for p in sorted(src.rglob('*.cs'))]
+    trees=[CSharpSyntaxTree.ParseText(File.ReadAllText(str(p)),path=str(p)) for p in sorted(src.rglob('*.cs')) if not {'obj','bin'}&set(p.relative_to(src).parts)]  # an SDK build leaves generated .cs under obj/
     if with_tests:
         for check in sorted((root/'tests').glob('*Checks.cs')):
             trees.append(CSharpSyntaxTree.ParseText(File.ReadAllText(str(check))))
