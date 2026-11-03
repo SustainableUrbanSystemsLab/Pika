@@ -6,9 +6,13 @@ namespace PlugInSolar {
 public static class PythonBridge {
     public static string RunPython(string request) {
         string folder=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        string root=Directory.GetParent(Directory.GetParent(folder).FullName).FullName;
-        string python=Path.Combine(root,".venv","bin","python");
-        if(!File.Exists(python))throw new FileNotFoundException("Python environment missing. Run scripts/build_plugin.sh in the repository.");
+        // SOLAR_PYTHON lets a Yak install (no repository .venv beside it) point at its own interpreter.
+        string python=Environment.GetEnvironmentVariable("SOLAR_PYTHON");
+        if(string.IsNullOrWhiteSpace(python)){
+            string root=Directory.GetParent(Directory.GetParent(folder).FullName).FullName;
+            python=Path.Combine(root,".venv","bin","python");
+        }
+        if(!File.Exists(python))throw new FileNotFoundException("Python environment missing. Set SOLAR_PYTHON to a Python with the packages in requirements-solar.txt, or run scripts/build_plugin.sh in the repository.");
         var info=new ProcessStartInfo(python){UseShellExecute=false,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,CreateNoWindow=true};
         info.ArgumentList.Add(Path.Combine(folder,"bridge.py"));
         using(var process=Process.Start(info)) {

@@ -6,6 +6,7 @@ Rhino 8 / Grasshopper components for generating and evaluating building-mounted 
 
 - **Geometry workflow:** open [Start_Here.3dm](examples/geometry/Start_Here.3dm), keeping millimeters, then [Geometry_Workflow.gh](examples/geometry/Geometry_Workflow.gh). Baseline: **6 panels, 10.005996 m²**.
 - **Solar workflow (experimental):** [Solar_Workflow.gh](examples/solar/Solar_Workflow.gh). Its embedded weather is synthetic; replace it with real EPW inputs for research.
+- **Install:** Rhino 8.27+ for Mac, Package Manager, package **Pika** (prereleases only so far; turn on prereleases to see it).
 - [Installation](docs/INSTALLATION.md) · [Current components](docs/COMPONENTS.md) · [Development](docs/DEVELOPMENT.md).
 
 The scripts and practical usability of **Select PV Panel**, **PV Geometry Generator**, and **PV Candidate Layout** have been verified in the tested geometry workflow. The newer solar components are retained as experimental work; they are not part of the separate three-component advisor package.
@@ -58,7 +59,7 @@ The geometry workflow runs directly in Rhino/Grasshopper; no external Python env
 
 The experimental Solar Conditions component additionally uses a local Python environment, the packages in `requirements-solar.txt`, installed Ladybug patch definitions and Radiance `gendaymtx`. See [solar workflow](docs/SOLAR_WORKFLOW.md).
 
-The current local build was verified in Rhino 8.36 for macOS, .NET 10.0.8. Use the in-Rhino build helper to compile against the running Rhino runtime, or the .NET 10 SDK project for this configuration. Other runtime/platform combinations are not implied to have been tested.
+The project targets .NET 8 and RhinoCommon 8.27 (the minimum supported Rhino 8 for Mac). Earlier local builds were verified in Rhino 8.36 for macOS on .NET 10.0.8; the .NET 8 build has not yet been verified in Rhino. Use the in-Rhino build helper to compile against the running Rhino runtime, or the SDK project. Other runtime/platform combinations are not implied to have been tested.
 
 ## Modeling boundaries
 

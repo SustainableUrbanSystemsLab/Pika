@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>PlugInSolar</AssemblyName>
     <Version>0.5.0</Version>
     <TargetExt>.gha</TargetExt>
@@ -8,9 +8,9 @@
     <RhinoDir Condition="'$(RhinoDir)'==''">/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Versions/A/Resources</RhinoDir>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="RhinoCommon"><HintPath>$(RhinoDir)/RhinoCommon.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="Grasshopper"><HintPath>$(RhinoDir)/ManagedPlugIns/GrasshopperPlugin.rhp/Grasshopper.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="GH_IO"><HintPath>$(RhinoDir)/ManagedPlugIns/GrasshopperPlugin.rhp/GH_IO.dll</HintPath><Private>false</Private></Reference>
+    <!-- 8.27 is the oldest supported Rhino; the Yak tag (rh8_27) is taken from the RhinoCommon referenced here. -->
+    <PackageReference Include="RhinoCommon" Version="8.27.26019.16021" ExcludeAssets="runtime" />
+    <PackageReference Include="Grasshopper" Version="8.27.26019.16021" ExcludeAssets="runtime" />
     <Reference Include="System.Windows.Forms"><HintPath>$(RhinoDir)/System.Windows.Forms.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Drawing.Common"><HintPath>$(RhinoDir)/System.Drawing.Common.dll</HintPath><Private>false</Private></Reference>
     <EmbeddedResource Include="Assets/*-24.png" />

@@ -17,9 +17,9 @@ This method needs no external Python packages for compilation. The experimental 
 
 ## Alternative SDK build/install on Mac
 
-`scripts/build_plugin.sh` uses a .NET 10 SDK, installs the pinned solar-backend requirements into the repository's ignored `.venv`, builds the project, and writes the Mac Grasshopper library link. Configure `SOLAR_DOTNET` or `SOLAR_PYTHON` if necessary. The current project defaults to the standard Rhino 8 Mac application path; `RhinoDir` can be overridden deliberately.
+`scripts/build_plugin.sh` uses the .NET 8+ SDK, installs the pinned solar-backend requirements into the repository's ignored `.venv`, builds the project, and writes the Mac Grasshopper library link. Configure `SOLAR_DOTNET` or `SOLAR_PYTHON` if necessary. The current project defaults to the standard Rhino 8 Mac application path; `RhinoDir` can be overridden deliberately.
 
-The in-Rhino compiler follows the running Rhino runtime. The SDK project targets the tested .NET 10 configuration; do not assume a resulting .NET 10 binary loads in an older runtime.
+The in-Rhino compiler follows the running Rhino runtime. The SDK project targets .NET 8 so one binary loads in every Rhino 8 for Mac from 8.27; do not retarget it to a newer runtime without raising the minimum Rhino version.
 
 ## Optional solar runtime
 
@@ -33,6 +33,10 @@ The old editable `plug_in_solar` Python package is no longer used by the current
 - With the Python runtime requirements installed: `python -m unittest discover -s tests -p 'test_*.py'`.
 - The C# exposure tests use `tests/data/sky_fixture.json`; they do not depend on temporary developer paths or regenerate weather in order to run.
 - The small Radiance sky fixture is test data, not a bundled annual weather forecast.
+
+## Packaging
+
+`scripts/build_yak.sh [beta.N]` stages and builds the Yak package into `build/yak/` without pushing it. Branch model, versions and publish steps: [Releasing](RELEASING.md).
 
 ## GitHub
 
