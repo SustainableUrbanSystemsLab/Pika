@@ -1,0 +1,138 @@
+name: Build and publish Yak package
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        type: string
+        required: true
+      beta_number:
+        type: number
+        default: 1
+      publish:
+        type: boolean
+        default: false
+      build_run_id:
+        type: string
+        default: ""
+    secrets:
+      YAK_TOKEN:
+        required: false
+
+concurrency:
+  group: pika-yak-${{ inputs.channel }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Validate channel and version inputs
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BETA_NUMBER: ${{ inputs.beta_number }}
+        run: |
+          set -euo pipefail
+          case "$CHANNEL" in
+            pre-release|release) ;;
+            *) echo 'Unknown Yak channel.' >&2; exit 1 ;;
+          esac
+          if [[ "$GITHUB_REF" != "refs/heads/$CHANNEL" ]]; then
+            echo "Run this workflow from the $CHANNEL branch." >&2
+            exit 1
+          fi
+          if [[ "$CHANNEL" == pre-release ]]; then
+            [[ "$BETA_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
+              echo 'Beta number must be a positive integer.' >&2
+              exit 1
+            }
+            echo "YAK_SUFFIX=beta.$BETA_NUMBER" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        if: inputs.publish == false
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Mount Rhino 8.27 build tools
+        run: |
+          set -euo pipefail
+          dmg="$RUNNER_TEMP/rhino.dmg"
+          mount="$RUNNER_TEMP/rhino-sdk"
+          curl --fail --location --silent --show-error --retry 3 \
+            https://files.mcneel.com/rhino/8/mac/releases/rhino_8.27.26019.16022.dmg -o "$dmg"
+          echo "a08e3fb3acd10bba7087bdb997af8a8b0d77311b82f04de0b92abc9f623556  $dmg" | shasum -a 256 -c
+          mkdir -p "$mount"
+          hdiutil attach -readonly -nobrowse -noverify -mountpoint "$mount" "$dmg"
+          app="$mount/Rhino 8.app"
+          echo "RhinoDir=$app/Contents/Frameworks/RhCore.framework/Versions/A/Resources" >> "$GITHUB_ENV"
+          echo "YAK=$app/Contents/Resources/bin/yak" >> "$GITHUB_ENV"
+
+      - name: Build or retrieve tested package
+        id: package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISH: ${{ inputs.publish }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Pika/Pika.csproj)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          if [[ -n "${YAK_SUFFIX:-}" ]]; then version="$version-$YAK_SUFFIX"; fi
+          package="build/yak/pika-$version-rh8_27-mac.yak"
+          if [[ "$PUBLISH" == true ]]; then
+            [[ "$BUILD_RUN_ID" =~ ^[1-9][0-9]*$ ]] || {
+              echo 'Enter the ID of the build-only run containing the tested package.' >&2
+              exit 1
+            }
+            workflow=yak-release.yml
+            if [[ "$CHANNEL" == pre-release ]]; then workflow=yak-prerelease.yml; fi
+            run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID")
+            jq -e --arg sha "$GITHUB_SHA" --arg branch "$CHANNEL" --arg path ".github/workflows/$workflow" \
+              '.head_sha == $sha and .head_branch == $branch and .path == $path and .conclusion == "success"' <<< "$run" >/dev/null
+            gh run download "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "v$version-yak" --dir build/yak
+          else
+            scripts/build_yak.sh "${YAK_SUFFIX:-}"
+          fi
+          unzip -t "$package"
+          echo "path=$package" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        if: inputs.publish == false
+        with:
+          name: ${{ steps.package.outputs.tag }}-yak
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+
+      - name: Publish to Yak and GitHub
+        if: inputs.publish
+        env:
+          YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE: ${{ steps.package.outputs.path }}
+          TAG: ${{ steps.package.outputs.tag }}
+        run: |
+          set -euo pipefail
+          : "${YAK_TOKEN:?Configure the repository YAK_TOKEN_PATRICK secret before publishing.}"
+          tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/tags" --jq '.[].name')
+          if grep -Fxq "$TAG" <<< "$tags"; then
+            echo "Tag $TAG already exists. Use a new version or complete the existing release." >&2
+            exit 1
+          fi
+          options=(--generate-notes)
+          if [[ -n "${YAK_SUFFIX:-}" ]]; then options+=(--prerelease); fi
+          "$YAK" push "$PACKAGE"
+          gh release create "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --title "Pika $TAG" "${options[@]}"
+
+      - name: Unmount Rhino build tools
+        if: always()
+        run: |
+          mount="$RUNNER_TEMP/rhino-sdk"
+          if [[ -d "$mount" ]] && mount | grep -Fq " on $mount "; then hdiutil detach "$mount"; fi

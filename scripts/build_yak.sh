@@ -12,7 +12,7 @@ VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$PROJECT")"
 [[ -n "$VERSION" ]] || { echo 'No <Version> in Pika.csproj.' >&2; exit 1; }
 [[ -z "${1:-}" ]] || VERSION="$VERSION-$1"
 rm -rf "$STAGE"
-"$SOLAR_DOTNET" build "$PROJECT" --configuration Release --output "$STAGE" -p:UseSharedCompilation=false -p:DebugType=none
+"$SOLAR_DOTNET" build "$PROJECT" --configuration Release --output "$STAGE" -p:Version="$VERSION" -p:UseSharedCompilation=false -p:DebugType=none
 cp "$SOLAR_ROOT/yak/manifest.yml" "$SOLAR_ROOT/yak/icon.png" "$STAGE/"
 cp -R "$SOLAR_ROOT/examples" "$STAGE/examples"
 (cd "$STAGE" && "$YAK" build --platform mac --version "$VERSION")
