@@ -1,11 +1,11 @@
 ---
 name: Pika
-version: 0.5.0
+version: 1.0.0
 authors:
 - Gayeon Lee
 - Patrick Kastner
 description: Rhino 8 / Grasshopper components for selecting PV panels, generating panel geometry and arranging candidate PV layouts on building faces, plus an experimental solar-exposure and electricity workflow. Rhino 8 for Mac.
-url: https://github.com/SustainableUrbanSystemsLab/Plug-In-Solar
+url: https://github.com/SustainableUrbanSystemsLab/Pika
 icon: icon.png
 keywords:
 - solar
