@@ -1,5 +1,10 @@
 # Plug-In Solar
 
+[![Yak Release](https://github.com/SustainableUrbanSystemsLab/Pika/actions/workflows/yak-release.yml/badge.svg?branch=pre-release)](https://github.com/SustainableUrbanSystemsLab/Pika/actions/workflows/yak-release.yml)
+[![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fyak.rhino3d.com%2Fpackages%2FPika&query=%24.version&label=version&color=blue)](https://github.com/SustainableUrbanSystemsLab/Pika/releases)
+[![Yak](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fyak.rhino3d.com%2Fpackages%2FPika&query=%24.version&suffix=%20&logo=Rhinoceros&label=Yak)](https://rhinopackages.github.io/?search=Pika&sort=2&p=Pika)
+[![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fyak.rhino3d.com%2Fpackages%2FPika&query=%24.download_count&label=downloads&color=brightgreen)](https://yak.rhino3d.com/packages/Pika)
+
 Rhino 8 / Grasshopper components for generating and evaluating building-mounted PV layouts.
 
 ## Start here
