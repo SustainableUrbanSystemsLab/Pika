@@ -6,10 +6,10 @@ SOLAR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOLAR_DOTNET="${SOLAR_DOTNET:-dotnet}"
 YAK="${YAK:-/Applications/Rhino 8.app/Contents/Resources/bin/yak}"
 STAGE="$SOLAR_ROOT/build/yak"
-PROJECT="$SOLAR_ROOT/src/PlugInSolar/PlugInSolar.csproj"
+PROJECT="$SOLAR_ROOT/src/Pika/Pika.csproj"
 # The csproj <Version> is the single source; --version overrides manifest.yml.
 VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$PROJECT")"
-[[ -n "$VERSION" ]] || { echo 'No <Version> in PlugInSolar.csproj.' >&2; exit 1; }
+[[ -n "$VERSION" ]] || { echo 'No <Version> in Pika.csproj.' >&2; exit 1; }
 [[ -z "${1:-}" ]] || VERSION="$VERSION-$1"
 rm -rf "$STAGE"
 "$SOLAR_DOTNET" build "$PROJECT" --configuration Release --output "$STAGE" -p:UseSharedCompilation=false -p:DebugType=none

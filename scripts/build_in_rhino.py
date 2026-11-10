@@ -4,6 +4,8 @@ The repository root is discovered from this script's scripts/ folder.
 """
 from pathlib import Path
 import os
+from datetime import datetime
+from uuid import uuid4
 import System
 from System import Array,Func
 from System.IO import File,Stream
@@ -14,11 +16,15 @@ for compiler_dll in ['Microsoft.CodeAnalysis.dll','Microsoft.CodeAnalysis.CSharp
 from Microsoft.CodeAnalysis import MetadataReference,SyntaxTree,OutputKind,OptimizationLevel,ResourceDescription
 from Microsoft.CodeAnalysis.CSharp import CSharpCompilation,CSharpCompilationOptions,CSharpSyntaxTree
 
-def build(package_root,output_name='PlugInSolar',with_tests=False):
-    root=Path(package_root);src=root/'src/PlugInSolar';out=root/'build/grasshopper';out.mkdir(parents=True,exist_ok=True)
+def build(package_root,output_name='Pika',with_tests=False):
+    root=Path(package_root);src=root/'src/Pika';out=root/'build'/('pika-'+datetime.now().strftime('%Y%m%d-%H%M%S')+'-'+uuid4().hex[:8]);out.mkdir(parents=True,exist_ok=True)
     paths=set(str(System.AppContext.GetData('TRUSTED_PLATFORM_ASSEMBLIES')).split(os.pathsep))
     for a in System.AppDomain.CurrentDomain.GetAssemblies():
-        if not a.IsDynamic and a.Location and not a.GetName().Name.startswith('PlugInSolar'):paths.add(str(a.Location))
+        try:
+            if not a.IsDynamic and a.Location and not a.Location.lower().endswith('.gha'):
+                paths.add(str(a.Location))
+        except System.BadImageFormatException:
+            raise RuntimeError('A loaded assembly was overwritten. Save your work and restart Rhino before building.')
     resources_root=Path('/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Resources')
     for name in ['Grasshopper.dll','GH_IO.dll']:paths.add(str(resources_root/'ManagedPlugIns/GrasshopperPlugin.rhp'/name))
     refs=[MetadataReference.CreateFromFile(p) for p in paths if Path(p).is_file() and not p.endswith('.gha')]

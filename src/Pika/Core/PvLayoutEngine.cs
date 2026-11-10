@@ -157,7 +157,11 @@ public static class PvLayoutEngine {
                 double usedW=columns*footprintW+Math.Max(0,columns-1)*sx,usedH=rows*footprintH+Math.Max(0,rows-1)*sy;
                 double startX=box.Min.X+clearance+(availableW-usedW)/2,startY=box.Min.Y+clearance+(availableH-usedH)/2;
                 double frontOffset=offset+thickness*cos+h*.5*Math.Abs(sin);
-                for(int row=0;row<rows;row++)for(int column=0;column<columns;column++) {
+                var positions=Enumerable.Range(0,(int)rows).SelectMany(r=>Enumerable.Range(0,(int)columns).Select(c=>new {Row=r,Column=c}))
+                    .OrderBy(p=>Math.Pow((p.Row-(rows-1)/2.0)*(footprintH+sy),2)+Math.Pow((p.Column-(columns-1)/2.0)*(footprintW+sx),2))
+                    .ThenBy(p=>p.Row).ThenBy(p=>p.Column);
+                foreach(var position in positions) {
+                    int row=position.Row,column=position.Column;
                     if(result.Panels.Count>=maxPanels){result.Limited=true;goto Finished;}
                     result.Tried++;
                     double minX=startX+column*(footprintW+sx),minY=startY+row*(footprintH+sy);

@@ -26,12 +26,12 @@ The scripts and practical usability of **Select PV Panel**, **PV Geometry Genera
 
 PV Module Specifications does not calculate solar exposure or electricity generation. It currently packages and validates module inputs and converts the temperature coefficient from percent to a fraction. Its removal is being considered to simplify the workflow.
 
-You can find C# scripts here: `src/PlugInSolar/Components`
+You can find C# scripts here: `src/Pika/Components`
 
 ## Repository map
 
 ```text
-src/PlugInSolar/
+src/Pika/
   Components/Inputs/       product selection and module specifications
   Components/Geometry/     geometry generator and candidate layout
   Components/Performance/  current solar conditions, exposure, map and electricity
@@ -40,7 +40,7 @@ src/PlugInSolar/
   UI/                      product dropdown interface
   Assets/                  required icons and editable SVG originals
   PluginInfo.cs            library identity and icon loading
-  PlugInSolar.csproj       build project
+  Pika.csproj       build project
 python/                    current Solar Conditions backend only
 scripts/                   build helpers
 examples/geometry/         current three-component main-plugin example

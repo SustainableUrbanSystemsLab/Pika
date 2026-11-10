@@ -61,7 +61,7 @@ public class PvModuleSpecsData : PvJsonData<PvModuleSpecs> {
     public override string TypeName=>"PV Module Specifications";
     public override string TypeDescription=>"STC electrical specifications; efficiency and temperature coefficient in percent units";
     public override IGH_Goo Duplicate()=>new PvModuleSpecsData(Data);
-    public override string ToString() {if(!IsValid)return "Invalid PV specifications";var d=Data;return $"{d.Model}: {d.PowerW} Wp, {d.EfficiencyPct}%, gamma {d.GammaPmaxPctPerC}%/°C";}
+    public override string ToString() {if(!IsValid)return "Invalid PV specifications";var d=Data;return $"{d.Model}: {d.PowerW} Wp, {d.EfficiencyPct}%, Pmax coefficient {d.GammaPmaxPctPerC}%/°C; Vmp {d.Vmp} V, Imp {d.Imp} A, Voc {d.Voc} V, Isc {d.Isc} A";}
 }
 public static class PvPanelCatalog {
     public const string Source="https://static.trinasolar.com/sites/default/files/Datasheet_Vertex%20S%2B_NEG9R.28_EN_2024_C_web.pdf";

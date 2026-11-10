@@ -39,10 +39,13 @@ public static class PvElectricityEngine {
     }
 }
 public sealed class PvElectricityComponent : GH_Component {
-    public PvElectricityComponent():base("PV Electricity","PV Electricity","Convert per-panel shaded solar exposure to module DC and array AC using PVWatts and a Faiman temperature approximation. No shared-string/bypass-diode model.","Plug-In Solar","02 Performance"){}
+    // Legacy component: retained for saved definitions, hidden from new workflows.
+    public override GH_Exposure Exposure => GH_Exposure.hidden;
+
+    public PvElectricityComponent():base("PV Electricity","PV Electricity","Convert per-panel shaded solar exposure to module DC and array AC using PVWatts and a Faiman temperature approximation. No shared-string/bypass-diode model. Required inputs: Solar Exposure and Module Specifications.","Pika","02 Performance"){}
     public override Guid ComponentGuid=>new Guid("bfef72c5-358b-4cc4-a49f-52de21512405");protected override Bitmap Icon=>Assets.Icon("pv_power");
     protected override void RegisterInputParams(GH_InputParamManager p){
-        p.AddGenericParameter("Solar Exposure","Exposure","PV Solar Exposure → Exposure.",GH_ParamAccess.item);p.AddGenericParameter("Module Specifications","Specs","Select PV Panel or PV Module Specifications → Specs. One identical product per layout.",GH_ParamAccess.item);
+        p.AddGenericParameter("Solar Exposure","Exposure","PV Solar Exposure → Exposure.",GH_ParamAccess.item);p.AddGenericParameter("Module Specifications","Specs","Select PV Panel → Specs. One identical product per layout.",GH_ParamAccess.item);
         p.AddNumberParameter("Array AC Rating","AC W","Total common-inverter AC limit, W. Zero sets it equal to total module DC nameplate power. Independent module MPP approximation; no shared strings.",GH_ParamAccess.item,0);
         p.AddNumberParameter("Other DC Losses","Loss%","Percent reduction after modeled shading, 0–100. Default zero; add explicitly justified non-shading losses.",GH_ParamAccess.item,0);
         p.AddNumberParameter("Fallback Air Temperature","Temp","Used only if Weather has no temp_air column, °C.",GH_ParamAccess.item,20);

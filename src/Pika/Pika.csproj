@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>PlugInSolar</AssemblyName>
+    <AssemblyName>Pika</AssemblyName>
+    <RootNamespace>PlugInSolar</RootNamespace>
     <Version>0.5.0</Version>
     <TargetExt>.gha</TargetExt>
     <EnableDynamicLoading>true</EnableDynamicLoading>
