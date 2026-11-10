@@ -54,7 +54,7 @@ jobs:
           mount="$RUNNER_TEMP/rhino-sdk"
           curl --fail --location --silent --show-error --retry 3 \
             https://files.mcneel.com/rhino/8/mac/releases/rhino_8.27.26019.16022.dmg -o "$dmg"
-          echo "a08e3fb3acd10bba7087bdb997af8a8b0d77311b82f04de0b92abc9f623556  $dmg" | shasum -a 256 -c
+          echo "a08e3fb3acd10bba7087bdb997af8a8b8a0d77311b82f04de0b92abc9f623556  $dmg" | shasum -a 256 -c
           mkdir -p "$mount"
           hdiutil attach -readonly -nobrowse -noverify -mountpoint "$mount" "$dmg"
           app="$mount/Rhino 8.app"
