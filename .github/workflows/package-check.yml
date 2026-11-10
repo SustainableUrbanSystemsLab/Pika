@@ -1,0 +1,26 @@
+name: Package Check
+
+# Dry run of the Yak pipeline on release PRs, as in Eddy3D: builds and checks the package
+# with the same reusable workflow as the real release, but never pushes. No Yak token is
+# passed, so it also runs on forks.
+
+on:
+  pull_request:
+    branches:
+      - pre-release
+      - release
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-check:
+    uses: ./.github/workflows/yak-package.yml
+    with:
+      channel: ${{ github.base_ref == 'release' && 'release' || 'pre-release' }}
+      publish: false

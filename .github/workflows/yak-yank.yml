@@ -1,0 +1,54 @@
+name: Yak Yank
+
+# Manual maintenance, from Eddy3D: yank (unlist) or unyank (restore) published Pika
+# versions. Yak has no hard delete. A yanked version is hidden from search and the Package
+# Manager but stays installable by exact version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package name
+        default: Pika
+        required: true
+      versions:
+        description: 'Space-separated versions, e.g. "1.0.0-beta.1 1.0.0-beta.2"'
+        required: true
+      action:
+        description: yank (hide) or unyank (restore)
+        type: choice
+        options:
+          - yank
+          - unyank
+        default: yank
+
+permissions:
+  contents: read
+
+jobs:
+  yank:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      YAK_TOKEN: ${{ secrets.YAK_TOKEN_PATRICK }}
+      PKG: ${{ inputs.package }}
+      ACT: ${{ inputs.action }}
+      VERSIONS: ${{ inputs.versions }}
+    steps:
+      - name: Download Yak CLI
+        shell: pwsh
+        run: Invoke-WebRequest -Uri 'https://files.mcneel.com/yak/tools/0.13.0/yak.exe' -OutFile 'yak.exe'
+
+      - name: ${{ inputs.action }} versions
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:YAK_TOKEN)) { throw 'YAK_TOKEN_PATRICK secret is empty.' }
+          $versions = $env:VERSIONS.Trim() -split '\s+' | Where-Object { $_ }
+          if ($versions.Count -eq 0) { throw 'No versions provided.' }
+          foreach ($v in $versions) {
+            Write-Host "yak $env:ACT $env:PKG $v"
+            & .\yak.exe $env:ACT $env:PKG $v
+            if ($LASTEXITCODE -ne 0) { throw "yak $env:ACT failed for $env:PKG $v" }
+          }
+          Write-Host "`n--- Listed versions after $env:ACT ---"
+          & .\yak.exe search $env:PKG -a --prerelease
