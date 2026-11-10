@@ -2,7 +2,7 @@
 
 ## Current source layout
 
-The single C# project is `src/PlugInSolar/PlugInSolar.csproj`. Components are grouped under Inputs, Geometry and Performance. Shared calculation/data/UI code is outside the component classes. `python/` contains only the current solar-preparation backend.
+The single C# project is `src/Pika/Pika.csproj`. Components are grouped under Inputs, Geometry and Performance. Shared calculation/data/UI code is outside the component classes. `python/` contains only the current solar-preparation backend.
 
 Main component GUIDs are unchanged for the retained components. The obsolete original component set and older layout/exposure implementations are intentionally no longer compiled. Do not restore an old full `Components.cs` into this project; it would reintroduce obsolete types and helpers.
 
@@ -23,7 +23,7 @@ The in-Rhino compiler follows the running Rhino runtime. The SDK project targets
 
 ## Optional solar runtime
 
-Create `.venv` in the repository root and install `requirements-solar.txt`. Ladybug Python definitions and Radiance `gendaymtx` are also needed by Solar Conditions. Its process helper locates the repository by the fixed `build/grasshopper` output layout; keep that layout intact.
+Run `scripts/setup_python.sh` with [uv](https://docs.astral.sh/uv/getting-started/installation/) installed. It creates the repository `.venv` with Python 3.11 when needed and installs the pinned dependencies from `requirements-solar.txt`. It reuses an existing `.venv`. `scripts/build_plugin.sh` uses this setup when uv is available and falls back to venv and pip. Ladybug Python definitions and Radiance `gendaymtx` are also needed by Solar Conditions. Its process helper locates the repository by the fixed `build/grasshopper` output layout; keep that layout intact.
 
 The old editable `plug_in_solar` Python package is no longer used by the current components. An existing local environment may still contain its old editable registration, but no current code imports it. Do not upload `.venv` to GitHub.
 
