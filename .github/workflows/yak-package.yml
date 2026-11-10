@@ -1,63 +1,52 @@
-name: Build and publish Yak package
+name: Package (reusable)
+
+# Reusable Pika packaging pipeline, modeled on Eddy3D's _package.yml. Builds the Rhino 8
+# Mac package with scripts/build_yak.sh and checks it. With publish: true it also pushes to
+# Yak, creates the GitHub release and confirms that Yak lists the version. With
+# publish: false (package-check on release PRs) it stops after the build and uploads the
+# .yak as an artifact. yak-release and package-check both call this workflow, so the
+# dry run and the real release use the same build and staging steps.
 
 on:
   workflow_call:
     inputs:
       channel:
+        description: "'pre-release' (X.Y.Z-beta.N, N auto-incremented) or 'release' (X.Y.Z)"
         type: string
-        required: true
-      beta_number:
-        type: number
-        default: 1
+        default: pre-release
       publish:
+        description: Push to Yak and create the GitHub release (true) or build only (false)
         type: boolean
         default: false
-      build_run_id:
-        type: string
-        default: ""
     secrets:
       YAK_TOKEN:
+        description: Yak auth token; required only when publish is true
         required: false
-
-concurrency:
-  group: pika-yak-${{ inputs.channel }}
-  cancel-in-progress: false
 
 jobs:
   package:
     runs-on: macos-15
     timeout-minutes: 30
+    # Never run two publishes of one channel at once: both would pick the same beta number.
+    concurrency:
+      group: pika-yak-${{ inputs.channel }}-${{ inputs.publish }}
+      cancel-in-progress: false
+    env:
+      CHANNEL: ${{ inputs.channel }}
+      PUBLISH: ${{ inputs.publish }}
+      GH_TOKEN: ${{ github.token }}
+      PACKAGE_NAME: Pika
     steps:
-      - name: Validate channel and version inputs
-        env:
-          CHANNEL: ${{ inputs.channel }}
-          BETA_NUMBER: ${{ inputs.beta_number }}
-        run: |
-          set -euo pipefail
-          case "$CHANNEL" in
-            pre-release|release) ;;
-            *) echo 'Unknown Yak channel.' >&2; exit 1 ;;
-          esac
-          if [[ "$GITHUB_REF" != "refs/heads/$CHANNEL" ]]; then
-            echo "Run this workflow from the $CHANNEL branch." >&2
-            exit 1
-          fi
-          if [[ "$CHANNEL" == pre-release ]]; then
-            [[ "$BETA_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
-              echo 'Beta number must be a positive integer.' >&2
-              exit 1
-            }
-            echo "YAK_SUFFIX=beta.$BETA_NUMBER" >> "$GITHUB_ENV"
-          fi
-
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
       - uses: actions/setup-dotnet@v4
-        if: inputs.publish == false
         with:
           dotnet-version: 8.0.x
 
+      # Rhino 8.27 is the oldest supported Rhino. Its .NET 8 build tools and yak CLI are used
+      # here, so the package is tagged rh8_27-mac regardless of the runner image.
       - name: Mount Rhino 8.27 build tools
         run: |
           set -euo pipefail
@@ -72,64 +61,113 @@ jobs:
           echo "RhinoDir=$app/Contents/Frameworks/RhCore.framework/Versions/A/Resources" >> "$GITHUB_ENV"
           echo "YAK=$app/Contents/Resources/bin/yak" >> "$GITHUB_ENV"
 
-      - name: Build or retrieve tested package
-        id: package
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PUBLISH: ${{ inputs.publish }}
-          BUILD_RUN_ID: ${{ inputs.build_run_id }}
-          CHANNEL: ${{ inputs.channel }}
+      # The csproj <Version> is the only X.Y.Z. A beta number is the next unused one across
+      # GitHub tags and Yak, so a push to pre-release always publishes a new version.
+      - name: Resolve version
+        id: version
         run: |
           set -euo pipefail
-          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Pika/Pika.csproj)
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          if [[ -n "${YAK_SUFFIX:-}" ]]; then version="$version-$YAK_SUFFIX"; fi
-          package="build/yak/pika-$version-rh8_27-mac.yak"
-          if [[ "$PUBLISH" == true ]]; then
-            [[ "$BUILD_RUN_ID" =~ ^[1-9][0-9]*$ ]] || {
-              echo 'Enter the ID of the build-only run containing the tested package.' >&2
-              exit 1
-            }
-            workflow=yak-release.yml
-            if [[ "$CHANNEL" == pre-release ]]; then workflow=yak-prerelease.yml; fi
-            run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BUILD_RUN_ID")
-            jq -e --arg sha "$GITHUB_SHA" --arg branch "$CHANNEL" --arg path ".github/workflows/$workflow" \
-              '.head_sha == $sha and .head_branch == $branch and .path == $path and .conclusion == "success"' <<< "$run" >/dev/null
-            gh run download "$BUILD_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "v$version-yak" --dir build/yak
+          base=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Pika/Pika.csproj)
+          [[ "$base" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Bad <Version> '$base' in Pika.csproj" >&2; exit 1; }
+          tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/tags" --jq '.[].name')
+          # Yak returns 404 for a package that has never been pushed; that means no versions.
+          yak_versions=$(curl --silent --fail "https://yak.rhino3d.com/versions/$PACKAGE_NAME" | jq -r '.[].version' || true)
+          taken=$(printf '%s\n%s\n' "$tags" "$yak_versions" | sed 's/^v//')
+          if [[ "$CHANNEL" == pre-release ]]; then
+            last=$(grep -E "^${base//./\\.}-beta\.[0-9]+$" <<< "$taken" | sed 's/.*-beta\.//' | sort -n | tail -1 || true)
+            suffix="beta.$(( ${last:-0} + 1 ))"
+            version="$base-$suffix"
+          elif [[ "$CHANNEL" == release ]]; then
+            suffix=""
+            version="$base"
+            if grep -Fxq "$version" <<< "$taken"; then
+              msg="$version is already tagged or on Yak. Bump <Version> in src/Pika/Pika.csproj."
+              if [[ "$PUBLISH" == true ]]; then echo "$msg" >&2; exit 1; fi
+              echo "::warning::$msg"
+            fi
           else
-            scripts/build_yak.sh "${YAK_SUFFIX:-}"
+            echo "Unknown channel '$CHANNEL'." >&2; exit 1
+          fi
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "Channel '$CHANNEL' -> package version $version"
+
+      - name: Build Yak package
+        id: package
+        env:
+          SUFFIX: ${{ steps.version.outputs.suffix }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          scripts/build_yak.sh "$SUFFIX"
+          # yak takes the rh8_27 tag from the RhinoCommon the .gha references; "any" means
+          # inspection failed and the Package Manager would offer the package to every Rhino.
+          package="build/yak/pika-$VERSION-rh8_27-mac.yak"
+          if [[ ! -f "$package" ]]; then
+            echo "::error::Expected $package; built: $(ls build/yak/*.yak)"
+            exit 1
           fi
           unzip -t "$package"
           echo "path=$package" >> "$GITHUB_OUTPUT"
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
+      # From Eddy3D: an assembly Rhino already loads must never ship in the package. Both
+      # copies satisfy the same reference and whichever loads first wins, per machine. Fix a
+      # hit at the source (ExcludeAssets="runtime" / <Private>false</Private>), not here.
+      - name: Guard against shipping Rhino-supplied assemblies
+        env:
+          PACKAGE: ${{ steps.package.outputs.path }}
+        run: |
+          set -euo pipefail
+          forbidden='^(RhinoCommon|Grasshopper|GH_IO|Rhino\.UI|Eto|System\.Windows\.Forms|System\.Drawing\.Common|System\.Resources\.Extensions|System\.Collections\.Immutable|System\.Reflection\.Metadata|Microsoft\.Win32\.SystemEvents|System\.Formats\.Nrbf)\.dll$'
+          hits=$(unzip -Z1 "$PACKAGE" | awk -F/ '{print $NF}' | grep -E "$forbidden" || true)
+          if [[ -n "$hits" ]]; then
+            while read -r h; do echo "::error::Rhino-supplied assembly staged: $h"; done <<< "$hits"
+            exit 1
+          fi
+          echo 'Package guard passed: no Rhino-supplied assemblies staged.'
+
+      # Convenience copy only; the durable outputs are Yak and the GitHub release.
       - uses: actions/upload-artifact@v4
-        if: inputs.publish == false
+        continue-on-error: true
         with:
-          name: ${{ steps.package.outputs.tag }}-yak
+          name: ${{ steps.version.outputs.tag }}-yak
           path: ${{ steps.package.outputs.path }}
           if-no-files-found: error
+          retention-days: 7
 
       - name: Publish to Yak and GitHub
         if: inputs.publish
         env:
           YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
-          GH_TOKEN: ${{ github.token }}
           PACKAGE: ${{ steps.package.outputs.path }}
-          TAG: ${{ steps.package.outputs.tag }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           : "${YAK_TOKEN:?Configure the repository YAK_TOKEN_PATRICK secret before publishing.}"
-          tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/tags" --jq '.[].name')
-          if grep -Fxq "$TAG" <<< "$tags"; then
-            echo "Tag $TAG already exists. Use a new version or complete the existing release." >&2
-            exit 1
-          fi
           options=(--generate-notes)
-          if [[ -n "${YAK_SUFFIX:-}" ]]; then options+=(--prerelease); fi
+          if [[ "$CHANNEL" == pre-release ]]; then options+=(--prerelease); fi
           "$YAK" push "$PACKAGE"
           gh release create "$TAG" "$PACKAGE" --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" --title "Pika $TAG" "${options[@]}"
+            --target "$GITHUB_SHA" --title "Pika $VERSION" "${options[@]}"
+
+      - name: Verify on Yak
+        if: inputs.publish
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 12); do
+            if curl --silent --fail "https://yak.rhino3d.com/versions/$PACKAGE_NAME" | jq -e --arg v "$VERSION" 'any(.[]; .version == $v)' >/dev/null; then
+              echo "Verified on Yak: $PACKAGE_NAME $VERSION"
+              exit 0
+            fi
+            echo "Attempt $i/12: $VERSION not visible yet. Retrying in 10s..."
+            sleep 10
+          done
+          echo "Yak verification failed: $PACKAGE_NAME $VERSION not found." >&2
+          exit 1
 
       - name: Unmount Rhino build tools
         if: always()
