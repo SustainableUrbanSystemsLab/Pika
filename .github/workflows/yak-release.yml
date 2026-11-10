@@ -1,27 +1,25 @@
-name: Yak release
+name: Yak Release
+
+# One workflow for both channels, as in Eddy3D: a push to `release` publishes the stable
+# X.Y.Z to Yak, and a push to `pre-release` publishes X.Y.Z-beta.N (the next unused N).
+# workflow_dispatch from either branch does the same. A dispatch from any other ref is refused.
 
 on:
+  push:
+    branches:
+      - release
+      - pre-release
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish to Yak and create a stable GitHub release
-        type: boolean
-        default: false
-      build_run_id:
-        description: Successful build-only run ID containing the tested package
-        type: string
-        default: ""
 
 permissions:
-  actions: read
   contents: write
 
 jobs:
-  package:
+  publish:
+    if: github.ref_name == 'release' || github.ref_name == 'pre-release'
     uses: ./.github/workflows/yak-package.yml
     with:
-      channel: release
-      publish: ${{ inputs.publish }}
-      build_run_id: ${{ inputs.build_run_id }}
+      channel: ${{ github.ref_name }}
+      publish: true
     secrets:
       YAK_TOKEN: ${{ secrets.YAK_TOKEN_PATRICK }}
